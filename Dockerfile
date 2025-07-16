@@ -1,15 +1,21 @@
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Install the server globally
-RUN npm install -g @apify/actors-mcp-server
-
-# Create a simple wrapper script
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'exec node /usr/local/lib/node_modules/@apify/actors-mcp-server/dist/http.js' >> /app/start.sh && \
-    chmod +x /app/start.sh
-
-EXPOSE 8000
-
-CMD ["/app/start.sh"]
+version: '3.8'
+services:
+  apify-mcp:
+    build: .
+    container_name: apify-mcp
+    restart: unless-stopped
+    
+    environment:
+      - NODE_ENV=production
+      - APIFY_TOKEN=${APIFY_TOKEN}
+      - PORT=8000
+      - HOST=0.0.0.0
+      
+    ports:
+      - "8000:8000"
+      
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
